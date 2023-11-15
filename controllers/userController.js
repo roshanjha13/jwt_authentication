@@ -1,6 +1,7 @@
 const createError = require("http-errors");
 const userModel = require("../models/userController");
 const { authSchema } = require("../validation/validation_schema");
+const { signAccessToken } = require("../utils/jwt_utils");
 
 exports.register = async (req, res, next) => {
   try {
@@ -10,9 +11,11 @@ exports.register = async (req, res, next) => {
       throw createError.Conflict(`${result.email} is already exist`);
 
     const user = new userModel(result);
-    await user.save();
+    const users = await user.save();
 
-    res.status(201).json(user);
+    const accessToken = await signAccessToken(users.id);
+
+    res.status(201).json({ data: user, token: accessToken });
   } catch (error) {
     if (error.isJoi === true) error.status = 422;
     next(error);
