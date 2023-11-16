@@ -29,5 +29,14 @@ userSchema.pre("save", async function (next) {
   } catch (error) {
     next(error);
   }
-}),
-  (module.exports = mongoose.model("users", userSchema));
+});
+
+userSchema.methods.isValidPassword = async function (password) {
+  try {
+    return await bcrypt.compare(password, this.password);
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports = mongoose.model("users", userSchema);
