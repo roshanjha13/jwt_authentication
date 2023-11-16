@@ -7,7 +7,7 @@ module.exports = {
       const payload = {};
       const secret = process.env.JWT_ACCESS_SECRET;
       const options = {
-        expiresIn: "1h",
+        expiresIn: "15s",
         issuer: "sitename.com",
         audience: userId,
       };
@@ -56,6 +56,21 @@ module.exports = {
         }
         resolve(token);
       });
+    });
+  },
+
+  verifyRefreshToken: (refreshToken) => {
+    return new Promise((resolve, reject) => {
+      jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET,
+        (err, payload) => {
+          if (err) return reject(createError.Unauthorized());
+          const userId = payload.aud;
+
+          resolve(userId);
+        }
+      );
     });
   },
 };

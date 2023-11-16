@@ -1,7 +1,11 @@
 const createError = require("http-errors");
 const userModel = require("../models/userController");
 const { authSchema } = require("../validation/validation_schema");
-const { signAccessToken, signRefreshToken } = require("../utils/jwt_utils");
+const {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} = require("../utils/jwt_utils");
 
 exports.register = async (req, res, next) => {
   try {
@@ -59,8 +63,19 @@ exports.login = async (req, res, next) => {
 exports.logout = async (req, res, next) => {
   res.send("Logout route");
 };
-exports.refereshToken = async (req, res, next) => {
-  res.send("Referesh Token route");
+exports.refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) throw createError.BadRequest();
+
+    const userId = await verifyRefreshToken(refreshToken);
+
+    const accessToken = await signAccessToken(userId);
+    const refToken = await signRefreshToken(userId);
+    res.status(201).json({ accessToken: accessToken, refreshToken: refToken });
+  } catch (error) {
+    next(error);
+  }
 };
 
 exports.getUser = async (req, res, next) => {
