@@ -1,7 +1,7 @@
 const createError = require("http-errors");
 const userModel = require("../models/userController");
 const { authSchema } = require("../validation/validation_schema");
-const { signAccessToken } = require("../utils/jwt_utils");
+const { signAccessToken, signRefreshToken } = require("../utils/jwt_utils");
 
 exports.register = async (req, res, next) => {
   try {
@@ -14,8 +14,13 @@ exports.register = async (req, res, next) => {
     const users = await user.save();
 
     const accessToken = await signAccessToken(users.id);
+    const refreshToken = await signRefreshToken(user.id);
 
-    res.status(201).json({ data: user, token: accessToken });
+    res.status(201).json({
+      data: user,
+      acess: accessToken,
+      refresh: refreshToken,
+    });
   } catch (error) {
     if (error.isJoi === true) error.status = 422;
     next(error);
@@ -37,10 +42,13 @@ exports.login = async (req, res, next) => {
       throw createError.Unauthorized("Useremail/Password is not valid");
 
     const accessToken = await signAccessToken(user.id);
+    const refreshToken = await signRefreshToken(user.id);
+
     res.status(200).json({
       data: user,
       message: `${result.email} is logged in successfully`,
       token: accessToken,
+      refresh: refreshToken,
     });
   } catch (error) {
     if (error.isJoi === true)
